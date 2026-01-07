@@ -25,3 +25,9 @@ Compromised accounts?
 Data stolen?
 Exfiltration method?
 Persistent access remaining?
+
+## Tech Stack
+- Windows 11
+- Microsoft Defender for Endpoint
+- Microsoft Sentinel
+- 
