@@ -30,4 +30,9 @@ Persistent access remaining?
 - Windows 11
 - Microsoft Defender for Endpoint
 - Microsoft Sentinel
-- 
+- KQL
+
+## Executive Summary
+
+## Recommendations
+
