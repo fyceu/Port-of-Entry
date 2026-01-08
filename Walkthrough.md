@@ -57,23 +57,38 @@ Below is a dropdown of all the findings for this threat hunt. To see my investig
 
 ## Threat Hunt
 
-### Initial Access - Remote Access Source
+### 🚩 Flag 1: Initial Access - Remote Access Source
+Objective: **Identify the source IP address of the Remote Desktop Protocol connection?**
 
-### Initial Access - Compromised User Account
-### Discovery - Network Reconaissance
-### Defense Evasion - Malware Staging Directory
-### Defense Evasion - File Extension Exclusions
-### Defense Evasion - File Path Exclusions
-### Defense Evasion - Download Utility Abuse
-### Persistence - Scheduled Task Name
-### Persistence - Scheduled Task Target
-### Command & Control - C2 Server Address
-### Command & Control - Credential Theft Tool
-### Credential Access - Memory Extraction Module
-### Collection - Data Staging Archive
-### Exfiltration - Exfiltration Channel
-### Anti-Forensics - Log Tampering 
-### Impact - Persistence Account
-### Execution - Malicious Script 
-### Lateral Movement - Secondary Target
-### Lateral Movement - Remote Access Tool
+Remote Desktop Protocol connections leave network traces that identify the source of unauthorised access. Determining the origin helps with threat actor attribution and blocking ongoing attacks.
+
+KQL Query: 
+```KQL
+DeviceLogonEvents
+| where DeviceName == "azuki-sl"
+| where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
+| where ActionType == "LogonSuccess"
+| where RemoteIPType == "Public"
+| project Timestamp, AccountName, ActionType, LogonType, RemoteIPType, RemoteIP, RemotePort
+| sort by Timestamp asc
+```
+### 🚩 Flag 2: Initial Access - Compromised User Account
+### 🚩 Flag 3: Discovery - Network Reconaissance
+### 🚩 Flag 4: Defense Evasion - Malware Staging Directory
+### 🚩 Flag 5: Defense Evasion - File Extension Exclusions
+### 🚩 Flag 6: Defense Evasion - File Path Exclusions
+### 🚩 Flag 7: Defense Evasion - Download Utility Abuse
+### 🚩 Flag 8: Persistence - Scheduled Task Name
+### 🚩 Flag 9: Persistence - Scheduled Task Target
+### 🚩 Flag 10: Command & Control - C2 Server Address
+### 🚩 Flag 11: Command & Control - C2 Communication Port
+### 🚩 Flag 12: Command & Control - Credential Theft Tool
+### 🚩 Flag 13: Credential Access - Memory Extraction Module
+### 🚩 Flag 14: Collection - Data Staging Archive
+### 🚩 Flag 15: Exfiltration - Exfiltration Channel
+### 🚩 Flag 16: Anti-Forensics - Log Tampering 
+### 🚩 Flag 17: Impact - Persistence Account
+### 🚩 Flag 18: Execution - Malicious Script 
+### 🚩 Flag 19: Lateral Movement - Secondary Target
+### 🚩 Flag 20: Lateral Movement - Remote Access Tool
+
