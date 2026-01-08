@@ -9,9 +9,11 @@
 - Recommendations
 
 ## Summary of Findings
-Below is a dropdown of all the findings for this threat hunt. To see my investigation steps, continue to the next section **Threat Hunt**
+Below is a dropdown of all the findings for this threat hunt. 
+
+To see my investigation steps, continue to the next section **Threat Hunt**
 <details>
-  <summary>SPOILER: Show Findingss</summary>
+  <summary>SPOILERS: Show Findings</summary>
 	
   <table>
 
