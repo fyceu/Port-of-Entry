@@ -2,26 +2,6 @@
 
 - Summary of Findings
 - Threat Hunt
-	- Flag 1: Initial Access - Remote Access Source
-	- Flag 2: Initial Access - Compromised User Account
-	- Flag 3: Discovery - Network Reconnaissance
-	- Flag 4: Defense Evasion - Malware Staging Directory
-	- Flag 5: Defense Evasion - File Extension Exclusions
-	- Flag 6: Defense Evasion - File Path Exclusions
-	- Flag 7: Defense Evasion - Download Utility Abuse
-	- Flag 8: Persistence - Scheduled Task Name
-	- Flag 9: Persistence - Scheduled Task Target
-	- Flag 10: Command & Control - C2 Server Address
-	- Flag 11: Command & Control - C2 Communication Port
-	- Flag 12: Credential Access - Credential Theft Tool
-	- Flag 13: Credential Acess - Memory Extraction Module
-	- Flag 14: Collection - Data Staging Archive
-	- Flag 15: Exfiltration - Exfiltration Channel
-	- Flag 16: Anti-Forensics - Log Tampering
-	- Flag 17: Impact - Persistence Account
-	- Flag 18: Execution - Malicious Script
-	- Flag 19: Lateral Movement - Secondary Target
-	- Flag 20: Lateral Movement - Remote Access Tool
 - Timeline
 - MITRE ATT&CK Framework
 - Indicators of Compromise (IOCs)
@@ -31,7 +11,7 @@
 ## Summary of Findings
 Below is a dropdown of all the findings for this threat hunt. To see my investigation steps, continue to the next section **Threat Hunt**
 <details>
-  <summary>Show Findings</summary>
+  <summary>SPOILER: Show Findingss</summary>
 	
   <table>
 
@@ -43,7 +23,7 @@ Below is a dropdown of all the findings for this threat hunt. To see my investig
 |  4   |      Identify the PRIMARY staging directory where malware was stored?      |       `C:\ProgramData\WindowsCache`       | `2025-11-19T19:05:33.7665036Z` |
 |  5   |   How many file extensions were excluded from Windows Defender scanning?   |                    `3`                    | `2025-11-19T18:49:29.1787135Z` |
 |  6   |  What temporary folder path was excluded from Windows Defender scanning?   | `C:\Users\KENJI~1.SAT\AppData\Local\Temp` | `2025-11-19T18:49:27.6830204Z` |
-|  7   | Identify the Windows-native binary the attacker abused to download files?  |               `cerutil.exe`               | `2025-11-19T19:06:58.5778439Z` |
+|  7   | Identify the Windows-native binary the attacker abused to download files?  |               `certutil.exe`              | `2025-11-19T19:06:58.5778439Z` |
 |  8   |      Identify the name of the scheduled task created for persistence?      |          `Windows Update Check`           | `2025-11-19T19:07:46.9796512Z` |
 |  9   |       Identify the executable path configured in the scheduled task?       | `C:\ProgramData\WindowsCache\svchost.exe` | `2025-11-19T19:07:46.9796512Z` |
 |  10  |         Identify the IP address of the command and control server?         |              `78.141.196.6`               | `2025-11-19T19:11:04.1766386Z` |
