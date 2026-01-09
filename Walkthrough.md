@@ -241,6 +241,9 @@ DeviceProcessEvents
 ```
 <img width="1276" height="346" alt="Screenshot 2026-01-07 at 7 18 31 PM" src="https://github.com/user-attachments/assets/562912c0-b215-4abc-a8b0-b84f3c25e0a9" />
 
+`"schtasks.exe" /create /tn "Windows Update Check" /tr C:\ProgramData\WindowsCache\svchost.exe /sc daily /st 02:00 /ru SYSTEM /f`
+
+
 BLAH BLAH BLAH 
 
 Flag: `Windows Update Check` <br>
@@ -251,12 +254,7 @@ Objective: **Identify the executable path configured in the scheduled task?
 
 The scheduled task action defines what executes at runtime. This reveals the exact persistence mechanism and the malware location.
 
-BLAH BLAH BLAH 
-```KQL
-
-
-```
-BLAH BLAH BLAH 
+Looking at the command line, we see the attacker staging a `svchost.exe` LOLBin at `C:\ProgramData\WindowsCache\svchost.exe` 
 
 Flag: `C:\ProgramData\WindowsCache\svchost.exe` <br>
 Timestamp: `2025-11-19T19:07:46.9796512Z`
