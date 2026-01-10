@@ -1,12 +1,10 @@
 ## Table of Contents
 
-- Summary of Findings
-- Threat Hunt
-- Timeline
-- MITRE ATT&CK Framework
-- Indicators of Compromise (IOCs)
-- Lessons Learned 
-- Recommendations
+- [Summary of Findings](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md#summary-of-findings)
+- [Threat Hunt](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md#threat-hunt)
+- [Timeline](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md#timeline)
+- [Indicators of Compromise (IOCs)](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md#indicators-of-compromise-iocs)
+- [Lessons Learned and Securiy Recommendations](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md#lessons-learned-and-security-recommendations)
 
 ## Summary of Findings
 Below is a dropdown of all the findings for this threat hunt. 
