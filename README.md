@@ -5,26 +5,26 @@
 </p>
 
 ## Incident Overview
-INCIDENT BRIEF - Azuki Import/Export - 梓貿易株式会社
+INCIDENT BRIEF - Azuki Import/Export - 梓貿易株式会社 <br>
 
-SITUATION:
-Competitor undercut our 6-year shipping contract by exactly 3%. Our supplier contracts and pricing data appeared on underground forums.
+**COMPANY**: Azuki Import/Export Trading Co. - 23 employees, shipping logistics Japan/SE Asia
 
-COMPANY:
-Azuki Import/Export Trading Co. - 23 employees, shipping logistics Japan/SE Asia
+**SITUATION**: Competitor undercut our 6-year shipping contract by exactly 3%. Our supplier contracts and pricing data appeared on underground forums.
 
-COMPROMISED SYSTEMS:
-AZUKI-SL (IT admin workstation)
+**Compromised Systems**:
+- AZUKI-SL (IT admin workstation)
 
-EVIDENCE AVAILABLE:
-Microsoft Defender for Endpoint logs
+**Evidence Available**:
+- Microsoft Defender for Endpoint logs
 
-INVESTIGATION QUESTIONS:
-Initial access method?
-Compromised accounts?
-Data stolen?
-Exfiltration method?
-Persistent access remaining?
+Investigate the compromised system using the captured endpoint logs to determine a timeline of the attacker's activity and provide answers to these questions to leadership 
+- Initial access method?
+- Compromised accounts?
+- Data stolen?
+- Exfiltration method?
+- Persistent access remaining?
+
+A full walkthrough of this lab can be read [here]().
 
 ## Tech Stack
 <img width="50" height="50" alt="azure" src="https://github.com/user-attachments/assets/fd2866b6-d2fa-4e61-bf55-0b20d63fca5e" />
@@ -49,5 +49,3 @@ The attacker created hidden folders and scheduled tasks to maintain access, extr
 This incident demonstrates how a single compromised account, combined with weak system protections, can lead to unauthorized access, data theft, and further spread inside a network.
 
 A full investigation walkthrough can be read [here]().
-
-## Recommendations
