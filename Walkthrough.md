@@ -511,6 +511,11 @@ Timestamp: `2025-11-19T19:10:42.057693Z`
 ## Timeline
 With the information gathered, there are plenty of artifacts to draft a rough timeline of events guided by the [MITRE ATT&CK Framework]()
 
+<details>
+  <summary>TABLE: Attack Timeline</summary>
+	
+  <table>
+	  
 |          **Timestamp**         	| **ATT&CK Tactics** 	|                                                                              **Event**                                                                              	|
 |:------------------------------:	|:------------------:	|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
 |  `2025-11-19T18:36:18.503997Z` 	|   Initial Access   	|                      External IP `88.97.178.12` successfully authenticated via RDP to `azuki-sl` using credentials of user account`kenji.sato`                      	|
@@ -529,9 +534,52 @@ With the information gathered, there are plenty of artifacts to draft a rough ti
 | `2025-11-19T19:11:04.1766386Z` 	|  Command & Control 	|                                             `svchost.exe` connects to external IP address `78.141.196.6` over port `443`                                            	|
 | `2025-11-19T19:11:39.0934399Z` 	|  Defense Evasion   	|                                            Attacker executes `wevutil cl` to clear Security, System, and Application logs                                           	|
 
+  </table>
 
+</details>
 
 ## Indicators of Compromise (IOCs)
+
+<details>
+  <summary>TABLE: Indicators of Compromise</summary>
+	
+  <table>
+
+|    **Type**    	|               **Indicator**               	|                            **Description**                            	|
+|:--------------:	|:-----------------------------------------:	|:---------------------------------------------------------------------:	|
+|   IP Address   	|               `88.97.178.12`              	|      External source IP used for unauthorized RDP initial access      	|
+|   IP Address   	|               `78.141.196.6`              	|      Malware staging server and command-and-control (C2) endpoint     	|
+|      Port      	|                   `3389`                  	|         RDP port used for initial access and lateral movement         	|
+|      Port      	|                   `8080`                  	|           Port used to host and download malicious payloads           	|
+|      Port      	|                   `443`                   	|                Encrypted C2 and data exfiltration port                	|
+|     Domain     	|         `discord.com/api/webhooks`        	|               Cloud service abused for data exfiltration              	|
+|  User Account  	|                `kenji.sato`               	|            Compromised user account used for initial access           	|
+|  User Account  	|                 `support`                 	|      Backdoor local administrator account created for persistence     	|
+|      File      	|                  `mm.exe`                 	|                Renamed Mimikatz credential dumping tool               	|
+|      File      	|               `svchost.exe`               	|             Malicious payload executed via scheduled task             	|
+|      File      	|               `wupdate.ps1`               	|               PowerShell script used to automate attack               	|
+|      File      	|             `export-data.zip`             	|               Compressed archive containing stolen data               	|
+|    Directory   	|       `C:\ProgramData\WindowsCache`       	| Hidden system-like directory used as primary malware staging location 	|
+|    Directory   	| `C:\Users\KENJI~1.SAT\AppData\Local\Temp` 	|         Defender excluded directory used for script execution         	|
+|    Directory   	|  `C:\Users\kenji.sato\AppData\Local\Temp` 	|             Temporary ddirectory used for script execution            	|
+|     Command    	|        `certutil.exe -urlcache -f`        	|         Living-off-the-Land binary abused to download malware         	|
+|     Command    	|    `powershell -ExecutionPolicy Bypass`   	|   PowerShell execution policy bypass for malicious script execution   	|
+|     Command    	|            `Invoke-WebRequest`            	|          PowerShell command used to download remote payloads          	|
+|     Command    	|         `sekurlsa::logonpasswords`        	|          Mimikatz module used to dump credentials from LSASS          	|
+|     Command    	|    `curl.exe -F file=@export-data.zip`    	|           Command used to exfiltrate stolen data to Discord           	|
+| Scheduled Task 	|           `Windows Update Check`          	|            Malicious scheduled task created for persistence           	|
+|      Tool      	|                `mstsc.exe`                	|              Windows RDP client used for lateral movement             	|
+|   IP Address   	|                `10.1.0.188`               	|             Internal system targeted for lateral movement             	|
+|    Event Log   	|                 `Security`                	|              Windows event log cleared for anti-forensics             	|
+|    Event Log   	|                  `System`                 	|              Windows Event log cleared for anti-forensics             	|
+|    Event Log   	|               `Application`               	|              Windows Event log cleared for anti-forensics             	|
+| File Extension 	|                   `.exe`                  	|          Defender exclusion added to allow malware execution          	|
+| File Extension 	|                   `.ps1`                  	|           Defender exclusion added to allow script execution          	|
+| File Extension 	|                   `.bat`                  	|           Defender exclusion added to allow batch execution           	|
+
+  </table>
+
+</details>
 
 ## Lessons Learned
 
