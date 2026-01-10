@@ -24,7 +24,7 @@ Investigate the compromised system using the captured endpoint logs to determine
 - Exfiltration method?
 - Persistent access remaining?
 
-A full walkthrough of this lab can be read [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md).
+A full walkthrough of this lab can be read [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md)
 
 ## Tech Stack
 <img width="50" height="50" alt="azure" src="https://github.com/user-attachments/assets/fd2866b6-d2fa-4e61-bf55-0b20d63fca5e" />
@@ -46,7 +46,7 @@ This investigation analyzed a security incident in which an attacker gained acce
 
 The attacker created hidden folders and scheduled tasks to maintain access, extracted stored passwords, and compressed the collected data into a single file. That data was then sent outside the organization using a trusted online service. Before leaving, the attacker attempted to erase evidence and used the compromised system to connect to another internal machine.
 
-A full investigation walkthrough can be read [here]().
+A full investigation walkthrough can be read [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md)
 
 <p align="center">
   <img width="1000" height="720" alt="image" src="https://github.com/user-attachments/assets/47caf497-f59c-4319-bd8f-dbfea1f8ae37" />
@@ -84,4 +84,4 @@ The attacker tried hiding their trakcs by clearing Windows Event logs for Securi
 - Ensure logs are forwarded to SIEM or log collector (retention length based on company policy)
 - Monitor and alert on attempts to clear logs
 
-Determination of these fidnings and recommendations can be derived from the investigation walkthrough [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md).
+Determination of these fidnings and recommendations can be derived from the investigation walkthrough [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md)
