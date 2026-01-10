@@ -509,7 +509,7 @@ Flag: `mstsc.exe` <br>
 Timestamp: `2025-11-19T19:10:42.057693Z`
 
 ## Timeline
-Based on the inforamtion we gathered, there are plenty of artifacts to draft a rough timeline of events according to the [MITRE ATT&CK Framework]().
+With the information gathered, there are plenty of artifacts to draft a rough timeline of events guided by the [MITRE ATT&CK Framework]()
 
 |          **Timestamp**         	| **ATT&CK Tactics** 	|                                                                              **Event**                                                                              	|
 |:------------------------------:	|:------------------:	|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
