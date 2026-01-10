@@ -84,4 +84,4 @@ The attacker tried hiding their trakcs by clearing Windows Event logs for Securi
 - Ensure logs are forwarded to SIEM or log collector (retention length based on company policy)
 - Monitor and alert on attempts to clear logs
 
-Determination of these fidnings and recommendations can be derived from the investigation walkthrough [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md)
+Determination of these findings and recommendations can be derived from the investigation walkthrough [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md)
