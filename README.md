@@ -24,7 +24,7 @@ Investigate the compromised system using the captured endpoint logs to determine
 - Exfiltration method?
 - Persistent access remaining?
 
-A full walkthrough of this lab can be read [here]().
+A full walkthrough of this lab can be read [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md).
 
 ## Tech Stack
 <img width="50" height="50" alt="azure" src="https://github.com/user-attachments/assets/fd2866b6-d2fa-4e61-bf55-0b20d63fca5e" />
@@ -84,4 +84,4 @@ The attacker tried hiding their trakcs by clearing Windows Event logs for Securi
 - Ensure logs are forwarded to SIEM or log collector (retention length based on company policy)
 - Monitor and alert on attempts to clear logs
 
-Determination of these findings and secuirty recommendations can be derived from the investigation walkthrough [here]().
+Determination of these fidnings and recommendations can be derived from the investigation walkthrough [here](https://github.com/fyceu/Port-of-Entry/blob/main/Walkthrough.md).
