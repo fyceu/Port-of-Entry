@@ -581,6 +581,31 @@ With the information gathered, there are plenty of artifacts to draft a rough ti
 
 </details>
 
-## Lessons Learned
+## Lessons Learned and Security Recommendations
 
-## Recommendations
+### Stolen Credentials enabled external access
+The attacker was able to easily access the network by using valid credentials of user account `kenji.sato`. This highlights that credential compromise alone is enough for anyone to gain unauthorized access within the environment. 
+
+- Enforce Multi-factor Authentication (MFA) for RDP access
+- Restrict RDP exposure through VPN-only access
+- Monitor and alert successful RDP logon from public IP addresses
+
+### Windows Built-in Tools utilized 
+The attacker leveraged trusted binaries (`certutil.exe`, `curl.exe`, `schtasks.exe`, and `wevutil.exe`) to stage and execute their attack. These can be difficult to track since they have legitimate use cases.
+- Restrict [LOLbins]() from executing in unusual file locations such as `Temp` directories
+- Monitor and alert for unsuual command line usage
+
+### Windows Defender Bypassed
+The attacker was able to add exlcusions to both File extensions and directories. This prevents Windows Defender from scanning and detecting malicious files in these directories. 
+- Restrict Windows Defender exclusions from Non-Admnistrators
+- Monitor and alert of new exclusions
+
+## Persistence Tasks and Accounts
+The attacker was able to create a scheduled task `Windows Update Check` which was set to run daily at 0200. Additionally, they were able to create the local user account `support`, adding them to the local adminsitrator group. These two mechanisms provided the attacker with persistence within the system even if other files of their attack were removed from the system. 
+- Routinely audit scheduled tasks and local administrator accounts
+- Restrict local account creation from non-administrator local accounts
+
+## Anti-forensics Activity 
+The attacker tried hiding their trakcs by clearing Windows Event logs for `Security`, `System`, and `Application`. This can make it difficult to track activity througgh their system during an incident or threat hunt
+- Ensure logs are forwarded to SIEM or log collector (retention length based on company policy)
+- Monitor and alert on attempts to clear logs 
