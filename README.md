@@ -30,6 +30,7 @@ Persistent access remaining?
 - Windows 11
 - Microsoft Defender for Endpoint
 - Microsoft Sentinel
+- VirusTotal
 - KQL
 
 ## Executive Summary
