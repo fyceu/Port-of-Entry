@@ -508,3 +508,31 @@ From previous flag, we can see the attacker using `mstsc.exe`, Windows Remote De
 Flag: `mstsc.exe` <br>
 Timestamp: `2025-11-19T19:10:42.057693Z`
 
+## Timeline
+Based on the inforamtion we gathered, there are plenty of artifacts to draft a rough timeline of events according to the [MITRE ATT&CK Framework]().
+
+|          **Timestamp**         	| **ATT&CK Tactics** 	|                                                                              **Event**                                                                              	|
+|:------------------------------:	|:------------------:	|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
+|  `2025-11-19T18:36:18.503997Z` 	|   Initial Access   	|                      External IP `88.97.178.12` successfully authenticated via RDP to `azuki-sl` using credentials of user account`kenji.sato`                      	|
+| `2025-11-19T18:49:27.6830204Z` 	|   Defense Evasion  	|                     Windows Defender exclusions set for directories `C:\Users\KENJI~1.SAT\AppData\Local\Temp` and `C:\ProgramData\WindowsCache`                     	|
+| `2025-11-19T18:49:29.1787135Z` 	|   Defense Evasion  	|                                            Windows Defender exclusions set for file extensions `.exe`, `.ps1`, and `.bat`                                           	|
+| `2025-11-19T18:49:48.7079818Z` 	|      Execution     	| PowerShell script executed to download malicious script `wupdate.ps1` from `78.141.196.6` over port `8080` into `C:\Users\kenji.sato\AppData\Local\Temp\` directory 	|
+|  `2025-11-19T19:04:01.773778Z` 	|      Discovery     	|                                               Attacker ran `arp.exe -a` to enumerate systems within the local network                                               	|
+| `2025-11-19T19:05:33.7665036Z` 	|   Defense Evasion  	|                  Attacker ran `attrib.exe" +h +s C:\ProgramData\WindowsCache` to create hidden system folder used as the Primary Staging directory                  	|
+| `2025-11-19T19:06:58.5778439Z` 	|      Execution     	|                         Attacker utilizes `certutil.exe` to download malicious payloads `mm.exe` and `svchost.exe` from `78.141.196.6:8080`                         	|
+| `2025-11-19T19:07:46.9796512Z` 	|     Persistence    	|                             Attacker created scheduled task `Windows Update Check` to execute malicious `svchost.exe` daily as `SYSTEM`                             	|
+| `2025-11-19T19:08:26.2804285Z` 	|  Credential Access 	|                                  Attacker executes Mimikatz using `sekurlsa::logonpasswords` to dump credentials from LSASS Memory                                  	|
+| `2025-11-19T19:08:58.0244963Z` 	|     Collection     	|                                           `export-data.zip` created within staging directory `C:\ProgramData\WindowsCache`                                          	|
+| `2025-11-19T19:09:21.4234133Z` 	|    Exfiltration    	|                                                 Attacker exfiltrates `export-data.zip` via `curl` command to Discord                                                	|
+| `2025-11-19T19:09:48.8977132Z` 	|     Persistence    	|                                         Attacker creates backdoor using local account `support` with local admin privileges                                         	|
+|  `2025-11-19T19:10:42.057693Z` 	|  Lateral Movement  	|                                                 Attacker initiated RDP via `mstsc.exe` to internal host `10.1.0.188`                                                	|
+| `2025-11-19T19:11:04.1766386Z` 	|  Command & Control 	|                                             `svchost.exe` connects to external IP address `78.141.196.6` over port `443`                                            	|
+| `2025-11-19T19:11:39.0934399Z` 	|  Defense Evasion   	|                                            Attacker executes `wevutil cl` to clear Security, System, and Application logs                                           	|
+
+
+
+## Indicators of Compromise (IOCs)
+
+## Lessons Learned
+
+## Recommendations
